@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import schemas
 from db import db
 from models import StoreModel
-from schemas import PlainStoreSchema
+from schemas import StoreSchema
 
 
 blue_print = Blueprint("stores", __name__, description="Operations on stores")
@@ -15,24 +15,26 @@ blue_print = Blueprint("stores", __name__, description="Operations on stores")
 
 @blue_print.route("/store/<string:store_id>")
 class Store(MethodView):
-    @blue_print.response(200, PlainStoreSchema)
+    @blue_print.response(200, StoreSchema)
     def get(self, store_id):
-        store = StoreModel.get_or_404(store_id)
+        store = StoreModel.query.get_or_404(store_id)
         return store
 
     def delete(self, store_id):
         store = StoreModel.query.get_or_404(store_id)
-        raise NotImplementedError("deleting a store is not implemented")
+        db.session.delete(store)
+        db.session.commit()
+        return {"message": "store deleted"}
 
 
 @blue_print.route("/store")
 class StoreList(MethodView):
-    @blue_print.response(200, PlainStoreSchema(many=True))
+    @blue_print.response(200, StoreSchema(many=True))
     def get(self):
-        return {"stores": list(stores.values())}
+        return StoreModel.query.all()
 
-    @blue_print.arguments(PlainStoreSchema)
-    @blue_print.response(200, PlainStoreSchema)
+    @blue_print.arguments(StoreSchema)
+    @blue_print.response(200, StoreSchema)
     def post(self, store_data):
         store = StoreModel(**store_data)
         try:
@@ -41,7 +43,7 @@ class StoreList(MethodView):
         except IntegrityError:
             abort(
                 400,
-                message="a store weith that name already exists"
+                message="a store with that name already exists"
             )
         except SQLAlchemyError:
             abort(500, message="an error occurred creating the store")

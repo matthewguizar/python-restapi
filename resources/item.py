@@ -13,27 +13,38 @@ blue_print = Blueprint("Items", __name__, description="Operations on items")
 
 @blue_print.route("/item/<string:item_id>")
 class Item(MethodView):
-    @blue_print.response(200, PlainItemSchema)
+    @blue_print.response(200, ItemSchema)
     def get(self, item_id):
         item = ItemModel.query.get_or_404(item_id)
         return item
 
     def delete(self, item_id):
         item = ItemModel.query.get_or_404(item_id)
-        raise NotImplementedError("deleting an item is not implemented")
+        db.session.delete(item)
+        db.session.commit()
+        return {"message": "item deleted"}
 
     @blue_print.arguments(ItemUpdateSchema)
-    @blue_print.response(200, PlainItemSchema)
+    @blue_print.response(200, ItemSchema)
     def put(self, item_data, item_id):
-        item = ItemModel.query.get_or_404(item_id)
-        raise NotImplementedError("updating an item is not implemented")
+        item = ItemModel.query.get(item_id)
+        if item:
+            item.price = item_data["price"]
+            item.name = item_data["name"]
+        else:
+            item = ItemModel(id=item_id, **item_data)
+
+        db.session.add(item)
+        db.session.commit()
+
+        return item
 
 
 @blue_print.route("/item")
 class ItemList(MethodView):
-    blue_print.response(200, ItemSchema(many=True))
+    @blue_print.response(200, ItemSchema(many=True))
     def get(self):
-        return items.values()
+        return ItemModel.query.all()
 
     @blue_print.arguments(ItemSchema)
     @blue_print.response(201, ItemSchema)
