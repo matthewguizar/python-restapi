@@ -1,10 +1,15 @@
 from flask import Flask
 from flask_smorest import Api
 
+from db import db
+import models
+
 from resources.item import blue_print as ItemBlueprint
 from resources.store import blue_print as StoreBlueprint
 
 app = Flask(__name__)
+
+
 
 app.config["PROPAGATE_EXCEPTIONS"] = True
 app.config["API_TITLE"] = "Stores REST API"
