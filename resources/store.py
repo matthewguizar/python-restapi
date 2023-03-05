@@ -13,7 +13,7 @@ from schemas import StoreSchema
 blue_print = Blueprint("stores", __name__, description="Operations on stores")
 
 
-@blue_print.route("/store/<string:store_id>")
+@blue_print.route("/store/<int:store_id>")
 class Store(MethodView):
     @blue_print.response(200, StoreSchema)
     def get(self, store_id):

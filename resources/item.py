@@ -1,7 +1,7 @@
-import uuid
 from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
+from flask_jwt_extended import jwt_required
 from sqlalchemy.exc import SQLAlchemyError
 
 from db import db
@@ -11,13 +11,15 @@ from schemas import PlainItemSchema, ItemUpdateSchema, ItemSchema
 blue_print = Blueprint("Items", __name__, description="Operations on items")
 
 
-@blue_print.route("/item/<string:item_id>")
+@blue_print.route("/item/<int:item_id>")
 class Item(MethodView):
+    @jwt_required()
     @blue_print.response(200, ItemSchema)
     def get(self, item_id):
         item = ItemModel.query.get_or_404(item_id)
         return item
 
+    @jwt_required()
     def delete(self, item_id):
         item = ItemModel.query.get_or_404(item_id)
         db.session.delete(item)
@@ -42,10 +44,12 @@ class Item(MethodView):
 
 @blue_print.route("/item")
 class ItemList(MethodView):
+    @jwt_required()
     @blue_print.response(200, ItemSchema(many=True))
     def get(self):
         return ItemModel.query.all()
 
+    @jwt_required(fresh=True)
     @blue_print.arguments(ItemSchema)
     @blue_print.response(201, ItemSchema)
     def post(self, item_data):
